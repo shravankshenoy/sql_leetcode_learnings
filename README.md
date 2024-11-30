@@ -25,8 +25,10 @@ from emp left emp_uni using (id)
 * When we want to filter a column in one table based on common column in another table but not having all values, we can either do a join on that column and then filter nulls (LEFT JOIN + IS NULL) or we can directly use NOT IN, as shown below 
 
 ```
-
+-- https://leetcode.com/problems/customer-who-visited-but-did-not-make-any-transactions
+-- Goal : To find the IDs of the customers who visited the mall but did not make any transactions and the number of times they made these types of visits (Visits table has customer_id and visit_id, Transactions table has visit_id and transaction_id)
 -- Approach 1
+
 with 
 Visits as (select * from Visits),
 Transactions as (select * from Transactions)
