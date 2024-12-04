@@ -4,7 +4,7 @@
 ## Day 1
 * Relearnt CTE syntax in SQL
 
-* If we want to join 2 tables on one or more columns that have the exact same name in both the tables, then we can use the USING keyword instead of ON keyword. Remember that the join column should be within parenthesis when we use USING
+* **USING keyword**: If we want to join 2 tables on one or more columns that have the exact same name in both the tables, then we can use the USING keyword instead of ON keyword. Remember that the join column should be within parenthesis when we use USING
 
 
 ```
@@ -63,9 +63,8 @@ GROUP BY customer_id
 3. https://www.geeksforgeeks.org/sql-using-clause/
 
 ## Day 2
-* In CTE, WITH keyword should be only at the beginning, not before each table
 
-* Cross join generates all possible combinations of values/rows. Cross join is useful when we want to create a grid like structure with all possible combinations. In the example below, we want to create a grid with all possible combinations of Students and SUbjects, and then use that to see how many times a student has taken an exam. Very useful to find cases when student has not taken an exam even once, which would not be captured without a cross join
+* Cross join generates all possible combinations of values/rows. Cross join is useful when we want to create a grid like structure with all possible combinations. In the example below, we want to create a grid with all possible combinations of Students and Subjects, and then use that to see how many times a student has taken an exam. Very useful to find cases when student has not taken an exam even once, which would not be captured without a cross join
 
 ```
 
@@ -128,6 +127,72 @@ SELECT COALESCE(NULL, 1, 2, 'W3Schools.com'); -- Output:1
 
 * COALESCE vs IFNULL : ifnull takes 2 arguments, whereas coalesce can take 2 or more than 2 arguments. Ifnull returns the first argument if it is not null, and the second argument if the first argument is null. coalesce return the first non null argument in the list of arguments, and if all the arguments are null, it returns null
 
-References
+### References
 1. https://stackoverflow.com/questions/219716/what-are-the-uses-for-cross-join
 2. https://stackoverflow.com/questions/8974328/mysql-multiple-joins-in-one-query
+
+## Day 3
+
+* Self join : You use a self join when a table references data in itself (for example managerId references to employeeId in the same table). In other words, foreign key refers to a primary key in the same table
+
+
+```
+-- https://leetcode.com/problems/managers-with-at-least-5-direct-reports/?envType=study-plan-v2&envId=top-sql-50
+with Managers as (
+    select managerId from Employee
+    group by managerId
+    having count(*) >= 5
+)
+select e.name 
+from Employee e 
+inner join Managers m 
+on e.id = m.managerId
+
+```
+
+* Conditional aggregation in SQL is very useful when we want percentage of each category in column (say colA - action) while grouping by another column (say colB - user_id) and not the category column itself
+
+```
+
+-- https://leetcode.com/problems/confirmation-rate/description/?envType=study-plan-v2&envId=top-sql-50
+
+select user_id, 
+    round(coalesce(sum(case when action = "confirmed" then 1 else 0 end), 0) * 1.0 / count(*), 2)as confirmation_rate
+from
+Signups left join Confirmations 
+using (user_id)
+group by user_id
+
+```
+### References
+1. https://stackoverflow.com/questions/770579/how-to-calculate-percentage-with-a-sql-statement
+2. https://stackoverflow.com/questions/51489103/how-do-i-get-percentage-amount-of-categorical-variables-per-day-using-sql
+3. https://stackoverflow.com/questions/3362038/what-is-self-join-and-when-would-you-use-it
+4. https://stackoverflow.com/questions/18680680/can-a-foreign-key-refer-to-a-primary-key-in-the-same-table
+
+## Day 4
+
+* Use the mod function or % to find modulus of number by another number
+* Use round function to round of result to a given number of decimal places
+
+```
+-- https://leetcode.com/problems/not-boring-movies/?envType=study-plan-v2&envId=top-sql-50
+
+select * 
+from Cinema
+where id % 2 = 1 and lower(description) <> "boring"
+order by rating desc
+
+
+-- https://leetcode.com/problems/project-employees-i/?envType=study-plan-v2&envId=top-sql-50
+select 
+    project_id, 
+    round(avg(experience_years), 2) as average_years
+from 
+    Project 
+left join 
+    Employee 
+using (employee_id)
+group by 1
+
+```
