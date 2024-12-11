@@ -196,3 +196,65 @@ using (employee_id)
 group by 1
 
 ```
+
+## Day 5
+
+
+```
+select 
+    contest_id, 
+    round((count(*) * 100) / (select count(*) from Users), 2) as percentage
+from
+Register 
+left join Users
+using (user_id)
+group by contest_id
+order by percentage desc, contest_id
+
+
+-- left join is not required in this scenario
+-- also we need to do distinct count
+select 
+    contest_id, 
+    round((count(distinct user_id) * 100) / (select count(user_id) from Users), 2) as percentage
+from
+    Register 
+group by 
+    contest_id
+order by 
+    percentage desc, 
+    contest_id asc
+```
+
+### References
+1. https://stackoverflow.com/questions/2051162/sql-multiple-column-ordering
+
+
+## Day 6
+
+
+```
+-- https://leetcode.com/problems/monthly-transactions-i/?envType=study-plan-v2&envId=top-sql-50
+select
+  left(trans_date, 7) as month,
+  country,
+  count(id) as trans_count,
+  sum(case when state="approved" then 1 else 0 end) as approved_count,
+  sum(amount) as trans_total_amount,
+  sum(case when state="approved" then amount else 0 end) as approved_total_amount
+from Transactions
+group by month, country
+
+OR
+
+select
+  date_format(trans_date, '%Y-%m') as month,
+  country,
+  count(id) as trans_count,
+  sum(case when state="approved" then 1 else 0 end) as approved_count,
+  sum(amount) as trans_total_amount,
+  sum(case when state="approved" then amount else 0 end) as approved_total_amount
+from Transactions
+group by month, country
+
+```
