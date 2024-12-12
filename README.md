@@ -199,8 +199,10 @@ group by 1
 
 ## Day 5
 
+* Note that select count(user_id) from Users although an expression returns a constant value and does not depend on the group by fields
 
 ```
+-- Approach 1
 select 
     contest_id, 
     round((count(*) * 100) / (select count(*) from Users), 2) as percentage
@@ -211,7 +213,7 @@ using (user_id)
 group by contest_id
 order by percentage desc, contest_id
 
-
+-- Approach 2 (better approach)
 -- left join is not required in this scenario
 -- also we need to do distinct count
 select 
@@ -232,9 +234,12 @@ order by
 
 ## Day 6
 
+* To format date to a specific format, use date_format function
+
 
 ```
 -- https://leetcode.com/problems/monthly-transactions-i/?envType=study-plan-v2&envId=top-sql-50
+-- Approach 1
 select
   left(trans_date, 7) as month,
   country,
@@ -245,8 +250,8 @@ select
 from Transactions
 group by month, country
 
-OR
 
+-- Approach 2
 select
   date_format(trans_date, '%Y-%m') as month,
   country,
@@ -256,5 +261,37 @@ select
   sum(case when state="approved" then amount else 0 end) as approved_total_amount
 from Transactions
 group by month, country
+
+```
+
+## Day 7
+
+* Cannot use next_login in the where clause of corresponding to the select, hence had to put it as a subquery
+
+* Need to alias the sUbquery to select from it, else an error
+
+```
+# 12/15 cases passed
+select round(count(*) / (select count(distinct player_id) from Activity),2) as fraction 
+from 
+    (select * from 
+        (select 
+            player_id, 
+            event_date, 
+            lead(event_date) over (order by player_id, event_date) as next_login
+         from Activity) a1
+    where event_date = (select min(event_date) from Activity a2 where a1.player_id=a2.player_id) and datediff(event_date, next_login) = -1
+    ) x
+
+# 14/15 cases passed
+select round(count(distinct player_id)/(select count(distinct player_id) from Activity),2) as fraction 
+from 
+    (select * from 
+        (select player_id, 
+        event_date, 
+        lead(event_date) over (order by player_id, event_date) as next_login
+        from Activity) a1
+    where event_date = (select min(event_date) from Activity a2 where a1.player_id=a2.player_id) and datediff(event_date, next_login) = -1
+    )x
 
 ```
