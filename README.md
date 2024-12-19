@@ -295,3 +295,131 @@ from
     )x
 
 ```
+
+## Day 8
+
+*  To compare two dates we can use arithmetic operators like >, >=, <, <=, == and <>. For these operators to work, the two dates should be in the ANSI-standard YYYY-MM-DD format. Other keywords for comparison are BETWEEN, ISNULL, DATEDIFF
+
+
+* Be careful about the edge cases i.e. >= and >, in this case since 27th July 2019 is included, it should be > with -30 days and >= with -29 days
+
+```
+-- https://leetcode.com/problems/user-activity-for-the-past-30-days-i/?envType=study-plan-v2&envId=top-sql-50
+
+-- Approach 1 (using date_add)
+
+select 
+    activity_date as day,
+    count(distinct user_id) as active_users
+from Activity
+where activity_date <= '2019-07-27' and activity_date > date_add('2019-07-27', INTERVAL -30 DAY)
+group by activity_date
+
+-- Approach 2 (using datediff)
+-- TO DO : Add sql code using datediff approach
+
+```
+
+* Dateadd syntax is different in mysql compared to other databases
+
+
+### References
+1. https://www.dbvis.com/thetable/how-to-compare-sql-dates/
+
+## Day 9
+
+*  We can use WHERE...IN with multiple columns simulataneously i.e. 
+
+```
+
+SELECT * FROM tableA
+WHERE
+   ([C1], [C2],..., [Cn]) IN (SELECT [D1], [D2],..., [Dn] FROM tableB)
+
+```
+In some databases like SQL Server this is not supported. In that case, you can use EXISTS, as mentioned in reference 1
+
+* Correlated subqueries (which is used in approach 1) are very slow. 
+
+```
+
+-- https://leetcode.com/problems/product-sales-analysis-iii/?envType=study-plan-v2&envId=top-sql-50
+-- Approach 1 (was timing out for some test cases)
+select product_id, year as first_year, quantity, price
+from Sales s1
+where year = (
+    select min(year) from Sales s2 where s1.product_id = s2.product_id
+)
+
+-- Apporach 2
+select product_id, year as first_year, quantity, price
+from Sales 
+where (product_id, year) in (
+    select product_id, min(year) from Sales group by product_id
+)
+
+
+```
+
+### Doubts
+1. How do you define a correlated subquery? What are some situations in which only correlated subquery works?
+
+
+### References
+1. https://dba.stackexchange.com/questions/247382/where-in-based-on-multiple-columns
+
+
+## Day 10
+
+* WHERE vs GROUP BY : Use Having clause when you are to filter out on the table which is already grouped by. Use Where clause when you are to filter out on the table before group by.
+
+```
+
+-- https://leetcode.com/problems/number-of-unique-subjects-taught-by-each-teacher/?envType=study-plan-v2&envId=top-sql-50
+select 
+    teacher_id, 
+    count(distinct subject_id) as cnt
+from Teacher
+group by teacher_id
+
+-- https://leetcode.com/problems/classes-more-than-5-students/?envType=study-plan-v2&envId=top-sql-50
+
+select class 
+from Courses
+group by class
+having count(student) >= 5
+
+
+-- https://leetcode.com/problems/find-followers-count/?envType=study-plan-v2&envId=top-sql-50
+
+
+select user_id, count(follower_id) as followers_count
+from Followers
+group by user_id
+order by user_id asc
+
+
+-- https://leetcode.com/problems/biggest-single-number/submissions/1482926065/?envType=study-plan-v2&envId=top-sql-50
+
+--- Approach 1 (using CTE)
+with SingleNumbers as (
+    select num
+    from MyNumbers
+    group by num
+    having count(*) = 1
+)
+select max(num) as num from SingleNumbers
+
+
+--- Approach 2 (using subqueries)
+TO DO : Add subqueries approach
+
+-- https://leetcode.com/problems/customers-who-bought-all-products/submissions/1482940486/?envType=study-plan-v2&envId=top-sql-50
+-- can we solve this problem without using count
+select customer_id 
+from Customer
+group by customer_id
+having count(distinct product_key) = (select count(product_key) from Product)
+
+```
+
