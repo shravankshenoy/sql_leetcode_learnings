@@ -423,3 +423,107 @@ having count(distinct product_key) = (select count(product_key) from Product)
 
 ```
 
+## Day 11
+
+```
+-- https://leetcode.com/problems/the-number-of-employees-which-report-to-each-employee/?envType=study-plan-v2&envId=top-sql-50
+--- Approach 1 (using cte)
+with Managers as 
+(
+select 
+    reports_to as employee_id, 
+    count(distinct employee_id) as reports_count, 
+    round(avg(age), 0) as average_age
+from Employees
+where reports_to is not null
+group by reports_to
+)
+select m.employee_id, e.name, m.reports_count, m.average_age
+from Managers m
+left join Employees e
+on m.employee_id = e.employee_id
+
+--- Approach 2 (using self join)
+--- TO DO : Add self join code
+
+-- https://leetcode.com/problems/primary-department-for-each-employee/?envType=study-plan-v2&envId=top-sql-50
+
+--- Approach 1 (using union)
+
+select employee_id, min(department_id) as department_id
+from Employee 
+group by employee_id
+having count(*) = 1
+
+union
+
+select employee_id, department_id
+from Employee
+where primary_flag='Y'
+
+--- Apporach 2 (without using union, just where clause)
+--- TO DO : Add union code
+
+
+```
+
+## Day 12
+
+```
+-- https://leetcode.com/problems/triangle-judgement/?envType=study-plan-v2&envId=top-sql-50
+select 
+    x,
+    y,
+    z,
+    case when x + y > z and y + z > x and x+z > y then "Yes" else "No" end as triangle
+from Triangle
+
+-- https://leetcode.com/problems/consecutive-numbers/description/?envType=study-plan-v2&envId=top-sql-50
+select distinct num as ConsecutiveNums 
+from 
+(
+    select 
+        id, 
+        num, 
+        lag(num) over (order by id) as num1, lag(num, 2) over (order by id) as num2
+    from 
+        Logs
+) LogsAdjacent
+where num = num1 and num1 = num2
+
+-- Write the same code using CTE, look for other logics
+
+
+```
+
+## Day 13
+* Have filtered multiple columns simulataneously using WHERE....IN
+
+```
+-- https://leetcode.com/problems/product-price-at-a-given-date/?envType=study-plan-v2&envId=top-sql-50
+with PricePrior as (
+    select product_id, new_price, change_date
+    from Products
+    where change_date <= "2019-08-16"
+    
+    union all
+    
+    select product_id, 10 as new_price, "1900-01-01" as change_date
+    from Products
+)
+
+select distinct
+    product_id, new_price as price
+from PricePrior
+where (product_id, change_date) in 
+    (select product_id, max(change_date) from PricePrior group by product_id)
+
+```
+
+* UNION ALL will perform better than UNION when you're not concerned about eliminating duplicate records because you're avoiding an expensive distinct sort operation
+
+### Doubts
+1. Suppose we have to find the value at the end of each month of the year, and we have new records in the table only when there is a change, how do we write a sql for that?
+
+### References
+1. https://stackoverflow.com/questions/3627946/performance-of-union-versus-union-all-in-sql-server
