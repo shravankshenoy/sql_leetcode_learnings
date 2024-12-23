@@ -497,17 +497,23 @@ where num = num1 and num1 = num2
 ```
 
 ## Day 13
-* Have filtered multiple columns simulataneously using WHERE....IN
+* Have filtered multiple columns simulataneously using WHERE....IN. Had to consider multiple scenarios
+    * No change_date before 2019-08-16
+    * Having one or more change_date only before 2019-08-16
+    * Having change_date both before and after 2019-08-16
+    * Having a change_date on 2019-08-16
+    Since we are not concerned with change_date post 2019-08-16, 2,3,4 can be handled simulataneously
 
 ```
 -- https://leetcode.com/problems/product-price-at-a-given-date/?envType=study-plan-v2&envId=top-sql-50
 with PricePrior as (
+    -- for products which have atleast once change_date before or on 2019-08-16
     select product_id, new_price, change_date
     from Products
     where change_date <= "2019-08-16"
     
     union all
-    
+    -- for products where there is no change_date before 2019-08-16
     select product_id, 10 as new_price, "1900-01-01" as change_date
     from Products
 )
