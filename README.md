@@ -496,6 +496,17 @@ where num = num1 and num1 = num2
 
 ```
 
+* When we create a subquery we need to alias it, else we get an error
+
+* There are different types of window functions listed below
+    * Aggregate window functions: Perform operations on sets of rows within a window, such as using SUM(), MAX(), and COUNT().
+    * Ranking window functions : Rank the rows within a given window, such as using RANK(), DENSE_RANK(), or ROW_NUMBER()
+    * Value window functions : Combine multiple operations into one, such as using LAG(), LEAD(), or FIRST_VALUE().
+
+### Doubts
+1. What are the different types of window functions? 
+
+
 ## Day 13
 * Have filtered multiple columns simulataneously using WHERE....IN. Had to consider multiple scenarios
     * No change_date before 2019-08-16
@@ -533,3 +544,69 @@ where (product_id, change_date) in
 
 ### References
 1. https://stackoverflow.com/questions/3627946/performance-of-union-versus-union-all-in-sql-server
+
+
+## Day 14
+
+* Used the same idea that I had learnt from (Day 7 problem)[https://leetcode.com/problems/game-play-analysis-iv/solutions/3673167/best-optimum-solution-with-explanation/?envType=study-plan-v2&envId=top-sql-50]. In that problem, to join a row with the next day row, we joined with the on condition having datediff = 1. In this problem, for every turn, I wanted to join with all the previous turns, and then get sum of all those rows to get the cumulative sum hence the join condition
+
+* When there is a missing catgory, then we have to handle each category separately with union
+
+```
+-- https://leetcode.com/problems/last-person-to-fit-in-the-bus/?envType=study-plan-v2&envId=top-sql-50
+with CumulativeQueue as (
+    select q1.person_id, q1.person_name, q1.weight, q1.turn, sum(q2.weight) as net_weight,
+    case when sum(q2.weight) <=1000 then 0 else 1 end as exceeds 
+    from Queue q1
+    left join Queue q2
+    on q1.turn >= q2.turn
+    group by 1,2,3,4
+    order by q1.turn asc
+)
+select person_name
+from CumulativeQueue
+where turn = (select max(turn) from CumulativeQueue where exceeds = 0)
+
+--- Optimize above code
+
+--- Solve the problem using window function
+
+--- Solve the problem using SQL variables
+
+
+-- https://leetcode.com/problems/count-salary-categories/submissions/1486960437/?envType=study-plan-v2&envId=top-sql-50
+--- Wrong approach : Does not work because if there is a category with no entries it does not appear in final result
+with AccountsWithCategory as
+(
+    select
+        account_id,
+        case when income < 20000 then "Low Salary"
+            when income >= 20000 and income <= 50000 then "Average Salary"
+            when income > 50000 then "High Salary" 
+        end as category
+    from
+    Accounts
+   
+)
+
+select category, count(account_id) as accounts_count from AccountsWithCategory group by category
+
+--- Approach 1
+select "Low Salary" as category, count(account_id) as accounts_count from Accounts where income < 20000
+
+union
+
+select "Average Salary" as category, count(account_id) as accounts_count from Accounts where income >= 20000 and income <= 50000
+
+union
+select "High Salary" as category, count(account_id) as accounts_count from Accounts where income > 50000
+
+```
+
+### Doubts
+1. How to compute cumulative sum in Mysql? How about other databases?
+2. What are variables in mysql and how do we use them?
+
+### References
+1. https://stackoverflow.com/a/61904024
+2. https://stackoverflow.com/questions/2563918/create-a-cumulative-sum-column-in-mysql
