@@ -610,3 +610,110 @@ select "High Salary" as category, count(account_id) as accounts_count from Accou
 ### References
 1. https://stackoverflow.com/a/61904024
 2. https://stackoverflow.com/questions/2563918/create-a-cumulative-sum-column-in-mysql
+
+
+## Day 15
+
+* LAG() function is used to get value from the row that precedes the current row. 
+* LEAD() function is used to get value from the row next to the current row
+
+* To optimize the code, instead of swapping ids, keep ids and swap students, because if we swap ids, then we again have to create a subquery to sort the new ids, but we swap the students ordering is not required.
+
+```
+-- https://leetcode.com/problems/employees-whose-manager-left-the-company/?envType=study-plan-v2&envId=top-sql-50
+
+select employee_id
+from Employees
+where salary < 30000 and manager_id not in (select employee_id from Employees)
+order by employee_id
+
+
+-- https://leetcode.com/problems/exchange-seats/?envType=study-plan-v2&envId=top-sql-50
+with NextRowSeat as (
+    select 
+        id,
+        lead(id) over (order by id asc) as next_row_id,
+        student
+    from
+        Seat
+),
+NewSeat as (
+
+    select     
+    case when id % 2 = 0 then id - 1
+         when id % 2 = 1 and next_row_id is not null then id + 1
+         else id
+    end as new_id,
+    student
+
+    from NextRowSeat
+)
+
+select new_id as id, student from NewSeat
+order by new_id asc
+
+```
+
+## Day 16
+
+
+```
+
+-- incorrect sql because we cannot use subquery alias in immediate where clause
+select min(name) as results from Users
+where user_id in 
+(
+select user_id 
+from
+(select user_id, count(distinct movie_id) as num_movies
+from MovieRating
+group by user_id) a
+where a.num_movies = (select max(num_movies) from a)
+)
+
+-- https://leetcode.com/problems/movie-rating/?envType=study-plan-v2&envId=top-sql-50
+
+with cte1 as (
+    select user_id, count(distinct movie_id) as num_movies
+    from MovieRating
+    group by user_id
+
+),
+cte2 as (
+    select user_id from cte1 
+    where cte1.num_movies = (select max(num_movies) from cte1)
+),
+resultname as (
+    select min(name) as results from Users
+    where user_id in (select user_id from cte2)
+),
+cte4 as (
+    select movie_id, avg(rating) as avg_rating from MovieRating
+    where date_format(created_at,"%Y-%m") = "2020-02"
+    group by movie_id     
+),
+cte5 as (
+    select movie_id from cte4
+    where avg_rating = (select max(avg_rating) from cte4)
+),
+resultmovies as (
+    select min(title) as results from Movies
+    where movie_id in (select movie_id from cte5)
+
+)
+
+select * from resultname 
+
+union all
+
+select *  from resultmovies
+
+-- Try to write a more optimized code with just 2 ctes with join instead of 6 ctes
+
+```
+
+### Doubts
+1. Can't we use a subquery alias in the WHERE statement
+
+### References
+1. https://stackoverflow.com/questions/11678269/using-subquerys-alias-in-a-where-statement
