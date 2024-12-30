@@ -717,3 +717,110 @@ select *  from resultmovies
 
 ### References
 1. https://stackoverflow.com/questions/11678269/using-subquerys-alias-in-a-where-statement
+
+## Day 17
+
+* To find difference bw two dates we use datediff 
+
+* Joins with inequality are very powerful, as shown in the problem below
+
+* To filter based on number of rows that are created after GROUP BY, we use HAVING with COUNT(*). In the problem, we only want those dates for which previous 7 days are available, therefore once we join with the previous days, we have to use the HAVING COUNT(*) logic
+
+* In this problem, we need to first aggregate at a daily level, else we will get duplicated if there are more than 1 entry for a given day
+
+```
+-- https://leetcode.com/problems/restaurant-growth/?envType=study-plan-v2&envId=top-sql-50
+with daily_total as
+(
+    select visited_on, sum(amount) as amount
+    from Customer
+    group by visited_on
+)
+
+select 
+    d1.visited_on, 
+    sum(d2.amount) as amount, 
+    round(avg(d2.amount), 2) as average_amount 
+
+from 
+    daily_total d1
+left join 
+    daily_total d2
+on 
+    datediff(d1.visited_on, d2.visited_on) < 7 and 
+    datediff(d1.visited_on, d2.visited_on) >= 0
+
+group by d1.visited_on
+having count(*) = 7 -- this
+
+order by d1.visited_on
+
+--- Solve the problem using window functions, look at ways to speeden up code
+
+```
+### Doubts
+1. Cant we do date1 - date2?
+2. How to filter based on number of rows available post aggregation using group by?
+
+### References
+1. https://stackoverflow.com/questions/5664103/filter-by-count
+
+## Day 18
+
+```
+-- https://leetcode.com/problems/friend-requests-ii-who-has-the-most-friends/solutions/3803211/union-all-is-what-you-need-don-t-overcomplicate/?envType=study-plan-v2&envId=top-sql-50
+
+with cte as (
+    select requester_id as id from RequestAccepted
+    union all
+    select accepter_id as id from RequestAccepted
+),
+NumFriends as (
+    select id, count(*) as num
+    from cte
+    group by id
+)
+
+select id, num
+from NumFriends
+where num = (select max(num) from NumFriends)
+
+--- Do using only 1 cte using order by + limit
+
+```
+
+### Doubts
+1. How to do distinct on 2 or more columns?
+2. How to remove any row which has a duplicate, based on 1 column? based on 2 columns?
+
+## Day 19
+### Learnings
+
+* SUBSTRING(string, start, length) function extracts some characters from a string. It follows 1 indexing
+* CONCAT(string1, string2, ...., string_n) adds two or more stings together
+* LENGTH() function is used to find length of string column in mysql (it is LEN() in some other dbs)
+* UPPER() and LOWER() functions used to change case of string column
+
+```
+-- https://leetcode.com/problems/fix-names-in-a-table/?envType=study-plan-v2&envId=top-sql-50
+select user_id, 
+    concat(upper(substring(name, 1, 1)), lower(substring(name, 2, length(name)-1))) as name
+from Users
+order by user_id
+
+-- https://leetcode.com/problems/patients-with-a-condition/?envType=study-plan-v2&envId=top-sql-50
+select patient_id, patient_name, conditions
+from Patients
+where conditions like 'DIAB1%' or conditions like '% DIAB1%'
+
+```
+
+### Doubts
+1. How can I achieve initcap functionality in MySQL?
+2. How to get index of last character/length of a string/substring from middle till end of string?
+3. How to use DELETE statement in MySQL?
+4. What are SUBSTRING_INDEX(), CHARINDEX() and LEFT() functions in sql?
+5. Can we use GROUP BY on a string column in SQL?
+6. What does You can't specify target table 'p1' for update in FROM clause mean?
+
+### References
