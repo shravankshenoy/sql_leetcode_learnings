@@ -824,3 +824,68 @@ where conditions like 'DIAB1%' or conditions like '% DIAB1%'
 6. What does You can't specify target table 'p1' for update in FROM clause mean?
 
 ### References
+
+## Day 20
+### Duration : 1 hour
+
+### Learnings
+
+* GROUP_CONCAT() function in MySQL is an aggregation function that combines data from multiple rows into a single string. Important cluases we can use within GROUP_CONCAT() are :
+    * DISTINCT (to eliminate repeated values)
+    * ORDER BY (to get the values in a certain order before concatenating)
+    * SEPARATOR (the character using which the values are concatenated)
+
+```
+--- 
+-- https://leetcode.com/problems/group-sold-products-by-the-date/?envType=study-plan-v2&envId=top-sql-50
+select 
+    sell_date, 
+    count(distinct product) as num_sold,
+    group_concat(distinct product separator ',') as products
+from Activities
+group by sell_date
+
+```
+
+* DELETE syntax in MYSQL is DELETE FROM TABLENAME WHERE CONDITION1
+
+* You need to specify the table where you want to delete the rows when joining tables in DELETE statement, by using the table alias as shown below
+
+```
+-- https://leetcode.com/problems/delete-duplicate-emails/?envType=study-plan-v2&envId=top-sql-50
+-- we want to delete rows from table P1 that satisfy the where clause
+
+delete p1 
+from Person p1, Person p2
+where p1.email = p2.email and p1.id > p2.id
+
+```
+
+* The goal here is when a value is repeated multiple times in a column, we want to indentify all the repititions i.e. all occurences of the value except the first one. To do so, we do a self cross join (lets sat p1 and p2). In the resultant table, we filter out rows which have the same value in both tables(p1.email = p2.email). In that filtered set, only the first occurence will have its id (in p1) lesser than the joined value from the corresponding table (i.e. p2), all other occurences will have atleast one row where the id in p1 is greater than id in p2. So once we find those rows, we select only those rows from p1 and eliminate them
+
+```
+--- run this code in https://onecompiler.com/mysql
+-- create
+CREATE TABLE EMPLOYEE (
+  id INTEGER PRIMARY KEY,
+  email TEXT NOT NULL
+);
+
+-- insert
+INSERT INTO EMPLOYEE VALUES (1, 'john@example.com');
+INSERT INTO EMPLOYEE VALUES (2, 'bob@example.com');
+INSERT INTO EMPLOYEE VALUES (3, 'john@example.com');
+INSERT INTO EMPLOYEE VALUES (4, 'john@example.com');
+
+-- fetch 
+-- SELECT * FROM EMPLOYEE E1, EMPLOYEE E2 WHERE E1.email = E2.email;
+
+-- Get all the repetition rows
+SELECT E1.id, E1.email FROM EMPLOYEE E1, EMPLOYEE E2
+WHERE E1.email = E2.email and E1.id > E2.id
+```
+
+### References
+1. https://www.geeksforgeeks.org/mysql-group_concat-function/
+2. https://dev.mysql.com/doc/refman/8.4/en/delete.html
+3. https://stackoverflow.com/questions/15767312/mysql-cross-table-delete
