@@ -889,3 +889,134 @@ WHERE E1.email = E2.email and E1.id > E2.id
 1. https://www.geeksforgeeks.org/mysql-group_concat-function/
 2. https://dev.mysql.com/doc/refman/8.4/en/delete.html
 3. https://stackoverflow.com/questions/15767312/mysql-cross-table-delete
+
+## Milestone
+Complete 40 / 50 questions in Leetcode SQL50 on 31-Dec-2024 
+
+
+## Day 21 and 23
+
+* In date_format function, we use %Y to match a year and %m to match a month
+
+```
+-- https://leetcode.com/problems/list-the-products-ordered-in-a-period/?envType=study-plan-v2&envId=top-sql-50
+select 
+    p.product_name, 
+    sum(o.unit) as unit
+from Orders o left join Products p
+using (product_id)
+where date_format(order_date, '%Y-%m') = '2020-02'
+group by product_id
+having sum(unit) >= 100
+
+```
+* We can have window functions without PARTITION BY. If the optional PARTITION BY clause is present, the rankings are reset for each group of rows. If not, the window function is computed over all the rows
+
+* SQL OFFSET is used to skip a specified number of rows in a query result.
+```
+
+
+-- Approach 1
+with cte as (
+    select 
+        id, 
+        salary, 
+        dense_rank() over (ORDER BY salary desc) as salary_rank
+from Employee
+)
+
+select distinct salary 
+as SecondHighestSalary 
+from cte
+where salary_rank=2
+
+union all
+
+select null as SecondHighestSalary
+where not exists (
+    select 1 from cte where salary_rank=2
+)
+
+-- Approach 2 (just use ifnull instead of union with null)
+
+with cte as (
+    select 
+        id, 
+        salary, 
+        dense_rank() over (ORDER BY salary desc) as salary_rank
+from Employee
+)
+
+select ifnull(
+(select distinct salary 
+from cte
+where salary_rank=2),
+null
+)
+as SecondHighestSalary
+
+
+-- Approach 3 (using limit with offset)
+
+select(
+select distinct salary 
+from Employee
+order by salary desc
+limit 1 offset 1
+) as SecondHighestSalary
+
+-- Does not work as it does not return null when no records match
+select distinct salary as SecondHighestSalary
+from Employee
+order by salary desc
+limit 1 offset 1
+
+```
+
+### Doubts
+1. How to remember if year is represented by Y and y in date_format function?
+2. How to use window function on entire table i.e. without any partitions?
+3. What does window function with only ORDER BY do?
+4. How to return a null value when query returns zero records? Can we do coalesce(column, null) or ifnull(column, null)?
+
+### References
+1. https://stackoverflow.com/questions/65481229/check-if-string-consists-of-letters-or-numbers-only-in-transact-sql
+2. https://www.geeksforgeeks.org/mysql-regular-expressions-regexp/
+3. https://docs.aws.amazon.com/redshift/latest/dg/r_WF_DENSE_RANK.html
+4. https://stackoverflow.com/questions/2679865/return-a-value-if-no-rows-are-found-in-microsoft-tsql
+
+
+## Day 22
+### Learnings
+* Regular expression is a tool used for flexible pattern matching within string data
+* Standard LIKE doesn't handle regex
+* ^ : starts with given string
+* $ : end of string
+* . : match any single character
+* To match a dot (like in an email), we need to escape the dot "\." or use it inside a character class "[.]", as it is a meta-character in regex
+* [afg] : matches any character listed within the square brackets
+* [A-Z] : match any upper case alphabet, the hyphen means a range in this case
+* [0-9] : match any digit from 0 to 9, the hyphen means a range in this case
+* [0-9.] : match any digit from 0 to 9 or a dot
+* * : Match zero of more instances of the string/expression preceding it
+
+```
+-- https://leetcode.com/problems/find-users-with-valid-e-mails/?envType=study-plan-v2&envId=top-sql-50
+select *
+from Users
+where mail REGEXP '^[A-Za-z][A-Za-z0-9_.-]*@leetcode[.]com$'
+
+-- . should be in square brackets else this is a valid email : winston@leetcode?com
+-- $ is required at end else this is valid email : winston@leetcode.comAVD
+
+```
+
+
+### Doubts
+1. Does [abx] match only one occurence of the 3 characters (a,b and x) or any number of occurences?
+
+### References
+1. https://stackoverflow.com/questions/13989640/regular-expression-to-match-a-dot
+2. https://www.geeksforgeeks.org/mysql-regular-expressions-regexp/
+
+* Group by vs lag vs where clause vs correlated subquery when do we use which? Give some examples.
