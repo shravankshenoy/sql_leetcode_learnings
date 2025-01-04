@@ -891,7 +891,7 @@ WHERE E1.email = E2.email and E1.id > E2.id
 3. https://stackoverflow.com/questions/15767312/mysql-cross-table-delete
 
 ## Milestone
-Complete 40 / 50 questions in Leetcode SQL50 on 31-Dec-2024 
+Completed 40 / 50 questions in Leetcode SQL50 on 31-Dec-2024 
 
 
 ## Day 21 and 23
@@ -911,6 +911,42 @@ having sum(unit) >= 100
 
 ```
 * We can have window functions without PARTITION BY. If the optional PARTITION BY clause is present, the rankings are reset for each group of rows. If not, the window function is computed over all the rows
+
+* To use window functions like rank(), row_number() or dense_rank() over entire table, we just have to use the order by + the column based on which we want the ranking, without the partition by in the OVER() clause as shown below
+```
+CREATE TABLE EMPLOYEE (
+  empId INTEGER,
+  name TEXT NOT NULL,
+  day_of_salary DATE NOT NULL,
+  salary INTEGER NOT NULL
+);
+
+-- insert
+INSERT INTO EMPLOYEE VALUES (0001, 'Clark', '2025-01-01', 2000);
+INSERT INTO EMPLOYEE VALUES (0001, 'Clark', '2025-01-02', 3000);
+INSERT INTO EMPLOYEE VALUES (0002, 'Dave', '2025-01-01', 1000);
+INSERT INTO EMPLOYEE VALUES (0002, 'Dave', '2025-01-02', 4000);
+INSERT INTO EMPLOYEE VALUES (0002, 'Dave', '2025-01-03', 5000);
+INSERT INTO EMPLOYEE VALUES (0003, 'Ava', '2025-01-01', 2000);
+INSERT INTO EMPLOYEE VALUES (0003, 'Ava', '2025-01-02', 2000);
+INSERT INTO EMPLOYEE VALUES (0003, 'Ava', '2025-01-03', 6000);
+
+
+
+-- fetch 
+-- SELECT *, MIN(salary) OVER () as min_salary_across_all_employees 
+-- FROM EMPLOYEE
+
+-- compute rank of salary across all employees
+-- SELECT *, RANK() OVER (ORDER BY salary) as salary_rank_across_all_employees 
+-- FROM EMPLOYEE
+
+-- compute rank of salary in comparison to salary of the same employee on a different day
+SELECT *, RANK() OVER (PARTITION BY empId ORDER BY salary) as salary_rank
+FROM EMPLOYEE
+ORDER BY empid
+
+```
 
 * SQL OFFSET is used to skip a specified number of rows in a query result.
 ```
@@ -978,13 +1014,16 @@ limit 1 offset 1
 2. How to use window function on entire table i.e. without any partitions?
 3. What does window function with only ORDER BY do?
 4. How to return a null value when query returns zero records? Can we do coalesce(column, null) or ifnull(column, null)?
+5. Is offset calculated before or after limit keyword?
 
 ### References
 1. https://stackoverflow.com/questions/65481229/check-if-string-consists-of-letters-or-numbers-only-in-transact-sql
 2. https://www.geeksforgeeks.org/mysql-regular-expressions-regexp/
 3. https://docs.aws.amazon.com/redshift/latest/dg/r_WF_DENSE_RANK.html
 4. https://stackoverflow.com/questions/2679865/return-a-value-if-no-rows-are-found-in-microsoft-tsql
-
+5. https://www.datacamp.com/tutorial/sql-offset
+6. https://stackoverflow.com/questions/65791960/window-functions-how-to-partition-over-nothing
+7. https://docs.getdbt.com/sql-reference/rank
 
 ## Day 22
 ### Learnings
@@ -998,7 +1037,7 @@ limit 1 offset 1
 * [A-Z] : match any upper case alphabet, the hyphen means a range in this case
 * [0-9] : match any digit from 0 to 9, the hyphen means a range in this case
 * [0-9.] : match any digit from 0 to 9 or a dot
-* * : Match zero of more instances of the string/expression preceding it
+* \* : Match zero of more instances of the string/expression preceding it
 
 ```
 -- https://leetcode.com/problems/find-users-with-valid-e-mails/?envType=study-plan-v2&envId=top-sql-50
@@ -1018,5 +1057,48 @@ where mail REGEXP '^[A-Za-z][A-Za-z0-9_.-]*@leetcode[.]com$'
 ### References
 1. https://stackoverflow.com/questions/13989640/regular-expression-to-match-a-dot
 2. https://www.geeksforgeeks.org/mysql-regular-expressions-regexp/
+
+
+### Day 24
+
+* Condition in ON clause vs WHERE clause : In the example below if we put the date condition in the WHERE clause, we are basically creating multiple combinatations based on the join id and then filtering only the meaningful ones (i.e those with purchase dates b/w start and end dates). Refer 1
+
+* For an INNER join does not matter if you put condition in ON or WHERE clause. But for outer joins it makes a difference
+
+```
+-- https://leetcode.com/problems/average-selling-price/?envType=study-plan-v2&envId=top-sql-50
+-- Approach 1
+select 
+    p.product_id, 
+    coalesce(round(sum(price * units)/sum(units),2),0) as average_price
+from 
+    Prices p left join UnitsSold u
+on 
+    p.product_id = u.product_id and 
+    u.purchase_date >= p.start_date and 
+    u.purchase_date <= p.end_date
+group by 
+    p.product_id
+
+
+-- Approach 2 (try the same thing by joining on only product_id and using where clause for dates)
+
+
+```
+
+* In where clause instead of `bonus is null or bonus < 1000` we can have `coalesce(bonus, 0) < 1000`
+
+```
+-- https://leetcode.com/problems/employee-bonus/
+select name, bonus
+from Employee left join Bonus
+using (empId)
+where bonus is null or bonus < 1000
+
+```
+
+
+### References
+1. https://stackoverflow.com/questions/354070/sql-join-what-is-the-difference-between-where-clause-and-on-clause
 
 * Group by vs lag vs where clause vs correlated subquery when do we use which? Give some examples.
