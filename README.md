@@ -1090,15 +1090,132 @@ group by
 
 ```
 -- https://leetcode.com/problems/employee-bonus/
+
+--- Approach 1
 select name, bonus
 from Employee left join Bonus
 using (empId)
 where bonus is null or bonus < 1000
+
+-- Approach 2
+select name, bonus
+from Employee left join Bonus
+using (empId)
+where coalesce(bonus, 0) < 1000
 
 ```
 
 
 ### References
 1. https://stackoverflow.com/questions/354070/sql-join-what-is-the-difference-between-where-clause-and-on-clause
+
+
+## Day 25
+
+```
+-- https://leetcode.com/problems/queries-quality-and-percentage/?envType=study-plan-v2&envId=top-sql-50
+
+--- Approach 1
+select
+    query_name,
+    round(avg(rating / position), 2) as quality,
+    round(sum(case when rating < 3 then 1 else 0 end) * 100.0/count(rating),2) as poor_query_percentage
+from Queries
+group by query_name
+
+--- Approach 2 (just use average instead of using sum and count, also use boolean instead of case)
+
+```
+### Doubts
+1. When we do avg with a condition inside, what is the denominator? Is it the total number of rows in that group? 
+
+### References
+1. https://stackoverflow.com/questions/9462873/basic-sql-selecting-avg-values-from-the-same-column-multiple-times-in-one-qu
+
+
+## Day 26 and 27
+
+### Learnings
+* Faced this error while working on problem 2: This version of MySQL doesn't yet support 'LIMIT & IN/ALL/ANY/SOME subquery'
+
+```
+-- https://leetcode.com/problems/immediate-food-delivery-ii?envType=study-plan-v2&envId=top-sql-50
+with first_orders_cte as (
+    select *
+    from Delivery
+    where (customer_id, order_date) in (select customer_id, min(order_date)
+    from Delivery group by customer_id)
+)
+
+select 
+    round(avg(case when order_date = customer_pref_delivery_date then 1 else 0 end) * 100,2) as immediate_percentage
+from first_orders_cte
+
+
+
+-- https://leetcode.com/problems/department-top-three-salaries/?envType=study-plan-v2&envId=top-sql-50
+
+-- Wrong approach
+with HighEarners as (
+select id, name 
+from Employee
+where (departmentId, salary) in (select distinct departmentId, salary from Employee group by departmentId order by salary desc limit 3)
+)
+select d.name, he.employee, he.salary
+from HighEarners he left join Department d
+on he.departmentId = d.id
+
+
+-- Approach 1 
+with WithRank as (
+select *, DENSE_RANK() OVER (PARTITION BY departmentId ORDER BY salary desc) as salaryRank
+from Employee
+),
+HighEarners as (
+    select id, name, salary, departmentId
+    from WithRank
+    where salaryRank in (1,2,3)
+)
+select 
+    d.name as Department, 
+    he.name as Employee, 
+    he.salary as Salary
+from HighEarners he left join Department d 
+on he.departmentId = d.id
+
+
+-- Approach 1 condensed with just 1 CTE
+with EmployeeWithRank as (
+select 
+    *, 
+    DENSE_RANK() OVER (PARTITION BY departmentId ORDER BY salary desc) as salaryRank
+from Employee
+)
+
+select 
+    d.name as Department, 
+    e.name as Employee, 
+    e.salary as Salary
+from EmployeeWithRank e left join Department d 
+on e.departmentId = d.id
+where e.salaryRank in (1,2,3)
+
+
+-- Approach 2 (try writing the same code without using window function)
+
+```
+
+* We cannot use window functions where there is a group by
+
+### Doubts
+1. How to find the top 2 earners for each department? How about top 3 for each department?
+2. What is the different b/w RANK + dostinct and DENSE_RANK?
+3. Can't we use DISTINCT in OVER clause eg. `RANK() OVER (DISTINCT salary, departmentId)`? 
+4. How to combine PARTITION BY with ORDER BY in OVER clause while using window function? Can we use ORDER BY without PARTITION BY?
+
+### References
+1. https://stackoverflow.com/questions/17892762/mysql-this-version-of-mysql-doesnt-yet-support-limit-in-all-any-some-subqu
+2. https://stackoverflow.com/questions/46371935/find-the-3rd-maximum-salary-for-each-department-based-on-table-data
+3. https://mode.com/sql-tutorial/sql-window-functions
 
 * Group by vs lag vs where clause vs correlated subquery when do we use which? Give some examples.
