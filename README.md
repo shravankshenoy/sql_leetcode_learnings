@@ -890,8 +890,7 @@ WHERE E1.email = E2.email and E1.id > E2.id
 2. https://dev.mysql.com/doc/refman/8.4/en/delete.html
 3. https://stackoverflow.com/questions/15767312/mysql-cross-table-delete
 
-## Milestone
-Completed 40 / 50 questions in Leetcode SQL50 on 31-Dec-2024 
+## Milestone : Completed 40 / 50 questions in Leetcode SQL50 on 31-Dec-2024 
 
 
 ## Day 21 and 23
@@ -1218,4 +1217,54 @@ where e.salaryRank in (1,2,3)
 2. https://stackoverflow.com/questions/46371935/find-the-3rd-maximum-salary-for-each-department-based-on-table-data
 3. https://mode.com/sql-tutorial/sql-window-functions
 
-* Group by vs lag vs where clause vs correlated subquery when do we use which? Give some examples.
+
+## Day 28
+
+* Join is one of the most effective way to find value corresponding to next day, previous day, or days in a given range
+
+* In the second problem, the basic idea is when we want to filter based on two conditions, but filtering one one condition eliminates rows impacting the other condition, then we should filter the rows separately and then do a join between them
+
+
+```
+-- https://leetcode.com/problems/game-play-analysis-iv/?envType=study-plan-v2&envId=top-sql-50
+-- find players who logged on day after their first login date
+with FirstLogin as (
+    select player_id, min(event_date) as first_login_date
+    from Activity
+    group by player_id
+)
+select 
+round(count(distinct f.player_id)/(select count(distinct player_id) from Activity), 2) as fraction
+from FirstLogin f inner join Activity a
+on f.player_id = a.player_id and datediff(a.event_date, f.first_login_date) = 1
+
+
+-- Write the same sql code above using left join instead of inner join
+
+-- https://leetcode.com/problems/investments-in-2016?envType=study-plan-v2&envId=top-sql-50
+with cte1 as (
+select lat, lon from Insurance
+group by lat, lon
+having count(*) = 1
+),
+cte2 as (select tiv_2015 from Insurance
+group by tiv_2015
+having count(pid) > 1),
+pidlist as(
+    select *
+    from Insurance
+    where (lat, lon) in (select lat, lon from cte1) and tiv_2015 in (select tiv_2015 from cte2)
+)
+
+select round(sum(tiv_2016), 2) as tiv_2016 
+from pidlist
+-- 
+
+```
+
+### Doubts
+1. Is datediff(d1, d2) equal to d1 - d2 or d2 - d1? 
+
+
+
+## Milestone : Completed 50 / 50 questions in Leetcode SQL50 on 10-Jan-2025 
